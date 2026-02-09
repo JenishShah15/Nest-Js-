@@ -1,0 +1,17 @@
+{
+   "name": "MyProject",
+   "version": "0.0.1",
+   "description": "Awesome project developed with TypeORM.",
+   "type": "commonjs",
+   "dependencies": {
+      "pg": "^8.18.0",
+      "reflect-metadata": "^0.2.2",
+      "typeorm": "^0.3.28"
+   },
+   "scripts": {
+      "start": "tsc && node build/index.js"
+   },
+   "devDependencies": {
+      "@types/node": "^25.2.2"
+   }
+}
