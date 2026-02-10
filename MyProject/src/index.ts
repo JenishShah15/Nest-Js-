@@ -1,21 +1,173 @@
 import { AppDataSource } from "./data-source"
 import { User } from "./entity/User"
+import { Photo } from "./entity/Photo"
+import { PhotoMetadata } from "./entity/PhotoeMetadata";
 
 AppDataSource.initialize().then(async () => {
 
-    console.log("Inserting a new user into the database...")
-    const user = new User()
-    user.firstName = "Timber"
-    user.lastName = "Saw"
-    user.age = 25
-    await AppDataSource.manager.save(user)
-    console.log("Saved a new user with id: " + user.id)
+    //User database operatoin using typeorm
 
-    console.log("Loading users from the database...")
-    const users = await AppDataSource.manager.find(User)
-    console.log("Loaded users: ", users)
 
-    console.log("Here you can setup and run express / fastify / any other framework.")
+    // console.log("Inserting a new user into the database...")
+    // const user = new User()
+    // user.firstName = "Timber"
+    // user.lastName = "Saw"
+    // user.age = 25
+    // await AppDataSource.manager.save(user)
+    // console.log("Saved a new user with id: " + user.id)
+
+    // console.log("Loading users from the database...")
+    // const users = await AppDataSource.manager.find(User)
+    // console.log("Loaded users: ", users)
+
+    // console.log("Here you can setup and run express / fastify / any other framework.")
+
+
+    //PHoto databse own operation using typeorm
+
+    //First operation creating the new model by own with saving
+
+    // const photo = new Photo();
+    // photo.name = "me and bears";
+    // photo.description = "I am near polar bears"
+    // photo.filename = "photo-with-bears.jpg"
+    // photo.views = 1
+    // photo.isPublished = true
+
+    // await AppDataSource.manager.save(photo);
+    // console.log("photo id of first photo", photo.id);
+
+    // const photo2 = new Photo();
+
+    // photo2.name = "me and bears2";
+    // photo2.description = "I am near polar bears2"
+    // photo2.filename = "photo-with-bears2.jpg"
+    // photo2.views = 2
+    // photo2.isPublished = true
+
+    // await AppDataSource.manager.save(photo2);
+
+    // console.log("photo id of first photo", photo2.id);
+
+
+    // console.log("two photos have been saved of the photo model");
+
+    // console.log("ALL photos array from the database");
+    // const savedPhotos = await AppDataSource.manager.find(Photo);
+    // console.log(savedPhotos);
+
+
+    //All other get functions usage in the PHoto model using repository method
+
+
+    const photoRepository = AppDataSource.getRepository(Photo);
+    const photometadatarepository = AppDataSource.getRepository(PhotoMetadata);
+
+    // inserting of data using photorepository
+    //  const photo = new Photo();
+    // photo.name = "me and bears4";
+    // photo.description = "I am near polar bears4"
+    // photo.filename = "photo-with-bears4.jpg"
+    // photo.views = 4
+    // photo.isPublished = true
+    // await photoRepository.save(photo);
+    // console.log(photo.id);
+
+    // photo.name = "me and bears5";
+    // photo.description = "I am near polar bears5"
+    // photo.filename = "photo-with-bears5.jpg"
+    // photo.views = 5
+    // photo.isPublished = true
+    // await photoRepository.save(photo);
+
+    // console.log(photo.id);
+
+    //Conclusion one instance of the object will only lead to one row sync in the running instance for new row creation you have to create new instance of the model
+
+
+
+
+
+
+
+    // const allphotos = await photoRepository.find();
+    // console.log("PHotos array : ", allphotos)
+    // const firstphoto = await photoRepository.findOneBy({ id: 1 })
+    // console.log("first Photos array : ", firstphoto);
+
+    // const meandbearphoto = await photoRepository.findOneBy({ name: "me and bears" });
+    // console.log("meandbear photo ", meandbearphoto);
+
+
+    // const [photos, photosCount] = await photoRepository.findAndCount();
+    // console.log("all photos", photos);
+    // console.log("total noDeprecation. of photos", photosCount);
+
+
+
+    // Updating and removing of the data from the database using typeorm
+
+
+    const updatephoto = await photoRepository.findOneBy({ id: 1 })
+    updatephoto.name = "jenish and bears";
+    updatephoto.filename = "jenish.jpg";
+
+    photoRepository.save(updatephoto);
+
+    // const phototoRemove = await photoRepository.findOneBy({ id: 7 });
+    // photoRepository.remove(phototoRemove);
+
+
+    //One to one relationship establishment usingtype orm
+
+    const photo = new Photo()
+    photo.name = "Me and Bears"
+    photo.description = "I am near polar bears"
+    photo.filename = "photo-with-bears.jpg"
+    photo.views = 1
+    photo.isPublished = true
+
+
+    const metadata = new PhotoMetadata();
+    metadata.height = 640
+    metadata.width = 480
+    metadata.compressed = true
+    metadata.comment = "cybershoot"
+    metadata.orientation = "portrait"
+    metadata.photo = photo // this way we connect them
+
+
+    //operations on one-to-one relationship
+
+
+
+
+    await photoRepository.save(photo);
+    await photometadatarepository.save(metadata);
+
+    const allphotometadata = await photometadatarepository.find();
+    // console.log(allphotometadata)
+
+    const photos = await photoRepository.find({
+        relations : {
+            metadata : true
+        }
+    })
+
+    console.log(photos);
+
+
+    
+
+
+
+
+
+
+
+
+
+
 
 }).catch(error => console.log(error))
 
