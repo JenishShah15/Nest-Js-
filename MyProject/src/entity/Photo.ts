@@ -1,6 +1,7 @@
 
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { PhotoMetadata } from "./PhotoeMetadata";
+import { Author } from "./Author";
 
 @Entity()
 export class Photo{
@@ -13,12 +14,17 @@ export class Photo{
     description : string
     @Column()
     filename : string
-    @Column()
+    @Column({nullable : true})
     views : number
     @Column()
     isPublished : boolean
 
-    @OneToOne(()=>PhotoMetadata,metadata=>metadata.photo)
+    @OneToOne(()=>PhotoMetadata,metadata=>metadata.photo,{
+        cascade : true,
+    })
     metadata : PhotoMetadata
+
+    @ManyToOne(()=>Author,author=>author.photos,{cascade:true})
+    author:Author
 }
 

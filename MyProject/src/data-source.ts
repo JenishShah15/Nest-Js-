@@ -3,6 +3,7 @@ import { DataSource } from "typeorm"
 import { User } from "./entity/User"
 import { Photo } from "./entity/Photo"
 import { PhotoMetadata } from "./entity/PhotoeMetadata"
+import { Author } from "./entity/Author"
 
 //It is used to setup the conncection for the connection to the required database
 
@@ -15,7 +16,7 @@ export const AppDataSource = new DataSource({
     database: "test",
     synchronize: true,
     logging: false,
-    entities: [User,Photo,PhotoMetadata],
+    entities: [User,Photo,PhotoMetadata,Author],
     migrations: [],
     subscribers: [],
 })
