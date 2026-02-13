@@ -1,30 +1,85 @@
 import { Injectable } from '@nestjs/common';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
-import { EntityManager } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { Item } from './entities/item.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Listing } from './entities/listing.entity';
+import { Comment } from './entities/comment.entity';
 
 @Injectable()
 export class ItemsService {
-  constructor(private readonly entityManager: EntityManager) {}
+  constructor(
+    @InjectRepository(Item) private readonly itemsRepository: Repository<Item>,
+    private readonly entityManager: EntityManager,
+  ) {}
+
   async create(createItemDto: CreateItemDto) {
-    const item = new Item(createItemDto);
+    console.log(createItemDto);
+    const { listing, ...rest } = createItemDto;
+    const listingObj = this.entityManager.create(Listing, {
+      ...listing,
+      rating: 0,
+    });
+    const item = this.entityManager.create(Item, {
+      ...rest,
+      comments: [],
+      listing: listingObj,
+    });
     await this.entityManager.save(item);
+    return item;
   }
 
-  findAll() {
-    return `This action returns all items`;
+  async findAll() {
+    return await this.itemsRepository.find({
+      relations: {
+        listing: true,
+        comments: true,
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} item`;
+  async findOne(id: number) {
+    const item = await this.itemsRepository.findOne({
+      where: { id },
+      relations: { listing: true, comments: true },
+    });
+    if (!item) {
+      return { statusbar: 404, message: 'Item not found' };
+    }
+    return item;
   }
 
-  update(id: number, updateItemDto: UpdateItemDto) {
-    return `This action updates a #${id} item`;
+  async update(id: number, updateItemDto: UpdateItemDto) {
+    console.log(updateItemDto);
+    const item = await this.itemsRepository.findOne({
+      where: { id },
+      relations: {
+        listing: true,
+        comments: true,
+      },
+    });
+
+    console.log(item);
+    if (!item) {
+      return null;
+    }
+
+    const comments = updateItemDto.comments.map((createcommentdto) =>
+      this.entityManager.create(Comment, { content: createcommentdto.content }),
+    );
+    item.public = updateItemDto.public;
+    // const comments = updateItemDto.comments.map(
+    //   (createCommentDto) => new Comment({ content: createCommentDto.content }),
+    // );
+    item.comments = [...item.comments, ...comments];
+
+    // item.comments = comments;
+    await this.itemsRepository.save(item);
+    return item;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} item`;
+  async remove(id: number) {
+    return await this.itemsRepository.delete({ id });
   }
 }
