@@ -6,25 +6,34 @@ import { Item } from './entities/item.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Listing } from './entities/listing.entity';
 import { Comment } from './entities/comment.entity';
+import { createTagDto } from './dto/create-tag-dto';
+import { DataSource } from 'typeorm';
+import { Tag } from './entities/tag.entity';
 
 @Injectable()
 export class ItemsService {
   constructor(
     @InjectRepository(Item) private readonly itemsRepository: Repository<Item>,
     private readonly entityManager: EntityManager,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createItemDto: CreateItemDto) {
-    console.log(createItemDto);
     const { listing, ...rest } = createItemDto;
     const listingObj = this.entityManager.create(Listing, {
       ...listing,
       rating: 0,
     });
+    console.log(createItemDto.tag);
+
+    const tags = createItemDto.tag.map((createTagDto) => {
+      return this.entityManager.create(Tag, createTagDto);
+    });
     const item = this.entityManager.create(Item, {
       ...rest,
       comments: [],
       listing: listingObj,
+      tags: tags,
     });
     await this.entityManager.save(item);
     return item;
@@ -35,6 +44,7 @@ export class ItemsService {
       relations: {
         listing: true,
         comments: true,
+        tags: true,
       },
     });
   }
@@ -42,7 +52,7 @@ export class ItemsService {
   async findOne(id: number) {
     const item = await this.itemsRepository.findOne({
       where: { id },
-      relations: { listing: true, comments: true },
+      relations: { listing: true, comments: true, tags: true },
     });
     if (!item) {
       return { statusbar: 404, message: 'Item not found' };
@@ -51,32 +61,43 @@ export class ItemsService {
   }
 
   async update(id: number, updateItemDto: UpdateItemDto) {
-    console.log(updateItemDto);
-    const item = await this.itemsRepository.findOne({
-      where: { id },
-      relations: {
-        listing: true,
-        comments: true,
-      },
+    return await this.dataSource.transaction(async (entityManager) => {
+      const item = await entityManager.findOne(Item, {
+        where: { id },
+        relations: {
+          listing: true,
+          comments: true,
+          tags: true,
+        },
+      });
+
+      if (!item) return null;
+
+      // create comments INSIDE transaction
+      const comments = updateItemDto.comments.map((dto) =>
+        entityManager.create(Comment, {
+          content: dto.content,
+        }),
+      );
+
+      item.public = updateItemDto.public;
+
+      // append comments
+      item.comments = [...item.comments, ...comments];
+
+      // SAVE using transaction manager
+      await entityManager.save(Item, item);
+
+      // create tag
+      const tag = entityManager.create(Tag, {
+        content: `${Math.random()}`,
+      });
+
+      await entityManager.save(Tag, tag);
+
+      // test rollback
+      // throw new Error('Intentional rollback test');
     });
-
-    console.log(item);
-    if (!item) {
-      return null;
-    }
-
-    const comments = updateItemDto.comments.map((createcommentdto) =>
-      this.entityManager.create(Comment, { content: createcommentdto.content }),
-    );
-    item.public = updateItemDto.public;
-    // const comments = updateItemDto.comments.map(
-    //   (createCommentDto) => new Comment({ content: createCommentDto.content }),
-    // );
-    item.comments = [...item.comments, ...comments];
-
-    // item.comments = comments;
-    await this.itemsRepository.save(item);
-    return item;
   }
 
   async remove(id: number) {

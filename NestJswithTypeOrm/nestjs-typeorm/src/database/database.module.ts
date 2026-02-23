@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Item } from 'src/items/entities/item.entity';
 import { Listing } from 'src/items/entities/listing.entity';
 import { Comment } from 'src/items/entities/comment.entity';
+import { Tag } from 'src/items/entities/tag.entity';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { Comment } from 'src/items/entities/comment.entity';
       username: 'postgres',
       password: 'jenish_015',
       database: 'test',
-      entities: [Item, Listing, Comment],
+      entities: [Item, Listing, Comment, Tag],
       synchronize: true,
       autoLoadEntities: true,
     }),
